@@ -1,19 +1,69 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import classes from './App.css';
-import Person from '../components/Persons/Person/Person';
+import Persons from '../components/Persons/Persons';
+import Cockpit from '../components/Cockpit/Cockpit'
+import Aux from '../hoc/Aux'
+import withClass from '../hoc/WithClass'
 // import ErrorBoundary from './ErrorBoundary/ErrorBoundary';
 
+export const AuthContext = React.createContext(false);
 
-class App extends Component {
+class App extends PureComponent {
+  constructor(props){
+    super(props);
+    console.log('[App.js] inside constructor ',props);
+    this.state = {
+      persons: [
+        {id: "1", name: 'Max', age: 28},
+        {id: "2", name: 'Manu', age: 29},
+        {id: "3", name: 'Stephanie', age: 20}
+      ],
+      otherState: 'bamboozle',
+      toggleCounter: 0,
+      authenticated: false
+    };
 
-  state = {
-    persons: [
-      {id: "1", name: 'Max', age: 28},
-      {id: "2", name: 'Manu', age: 29},
-      {id: "3", name: 'Stephanie', age: 20}
-    ],
-    otherState: 'bamboozle'
   }
+  componentWillMount(){
+    console.log('[App.js] componentWillMount');
+  }
+  componentDidMount(){
+    console.log('[App.js] componentDidMount');
+  }
+
+  //PureComponent has implemented this
+  // shouldComponentUpdate(nextProps, nextState){
+  //   console.log('[UPDATE App.js] Inside shouldComponentUpdate', nextProps, nextState );
+  //   return nextState.persons !== this.state.persons || nextState.showPersons !== this.state.showPersons;
+  // }
+
+  componentWillUpdate(nextProps){
+      console.log('[UPDATE App.js] Inside componentWillUpdate', nextProps );
+  }
+  
+  
+
+  static getDerivedStateFromProps(nextProps, prevState){
+    // if component needs to bring state and props in sync
+    // do something with the props and return a new state {}
+    return prevState;
+  }
+
+  getSnapshotBeforeUpdate(){
+    // for example save the scrolling position
+  }
+  componentDidUpdate(nextProps){
+    console.log('[UPDATE App.js] Inside componentDidUpdate', nextProps );
+  }
+
+  // state = {
+  //   persons: [
+  //     {id: "1", name: 'Max', age: 28},
+  //     {id: "2", name: 'Manu', age: 29},
+  //     {id: "3", name: 'Stephanie', age: 20}
+  //   ],
+  //   otherState: 'bamboozle'
+  // }
 
   nameChangedHandler = (event, id) => {
     const personIndex = this.state.persons.findIndex(p => {
@@ -42,48 +92,50 @@ class App extends Component {
 
   togglePersonsHandler = () => {
     const doesShow = this.state.showPersons;
-    this.setState({showPersons: !doesShow});
+    this.setState((prevState, props) => {
+      return {
+        showPersons: !doesShow,
+        toggleCounter: prevState.toggleCounter+1
+        }
+    });
   }
 
-  render() {
+  loginHandler = () => {
+    this.setState({authenticated: true});
+    // console.log(this.state.authenticated);
+  }
+
+  render( ) {
+    console.log('[App.js] inside render');
     let persons = null;
-    let btnClass = '';
+    
     if(this.state.showPersons){
       persons = (
-        <div>
-          {this.state.persons.map((person, index) => {
-            return   <Person 
-            name={person.name} 
-            age={person.age}
-            click={this.deletePersonHandler.bind(this, index)}
-            
-            changed={(event) => this.nameChangedHandler(event, person.id)}></Person>
-            
-          })}
-            
-          </div> 
+          <Persons 
+          persons={this.state.persons}
+          clicked={this.deletePersonHandler}
+          changed={this.nameChangedHandler}
+          // isAuthenticated={this.state.authenticated}
+          />
       );
       
-      btnClass = classes.Red;
-    }
-
-    const assignedClasses = [];
-    if(this.state.persons.length <= 2){
-      assignedClasses.push(classes.red);
-    }
-    if(this.state.persons.length <= 1){
-      assignedClasses.push(classes.bold);
+      
     }
     
     return (
-      <div className={classes.App}>
-        <h1>Hello im a react developer now</h1>
-        <p className={assignedClasses.join(' ')}>This is a funny paragraph</p>
-        <button 
-        className={btnClass}
-        onClick={this.togglePersonsHandler} >Switch Name</button>
+      <Aux>
+        <button onClick={()=>{ this.setState({ showPersons:true }) }} >Show Persons</button>
+        <Cockpit 
+          appTitle={this.props.title}
+          showPersons={this.state.showPersons}
+          persons={this.state.persons}
+          clicked={this.togglePersonsHandler}
+          login={this.loginHandler}
+        />
+        <AuthContext.Provider value={this.state.authenticated}>
         {persons}
-      </div>
+        </AuthContext.Provider>
+      </Aux>
     );
     // return React.createElement('div', null, React.createElement('h1', {className: 'App'}, 'Hello i\'m a react developer now'))  
   }
@@ -91,4 +143,4 @@ class App extends Component {
 
 
 // higher order component
-export default App;
+export default withClass(App, classes.App);
